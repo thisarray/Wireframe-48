@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pitfall</title>
+  <script src="../../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+<section id="imageLoader" class="hidden">
+  <img class="hidden" src="images/background.png" alt="background" data-name="background">
+  <img class="hidden" src="images/harry.png" alt="harry" data-name="harry">
+  <img class="hidden" src="images/harry0.png" alt="harry0" data-name="harry0">
+  <img class="hidden" src="images/harry0r.png" alt="harry0r" data-name="harry0r">
+  <img class="hidden" src="images/harry1.png" alt="harry1" data-name="harry1">
+  <img class="hidden" src="images/harry1r.png" alt="harry1r" data-name="harry1r">
+  <img class="hidden" src="images/harry2.png" alt="harry2" data-name="harry2">
+  <img class="hidden" src="images/harry2r.png" alt="harry2r" data-name="harry2r">
+  <img class="hidden" src="images/harry3.png" alt="harry3" data-name="harry3">
+  <img class="hidden" src="images/harry3r.png" alt="harry3r" data-name="harry3r">
+  <img class="hidden" src="images/harryrope.png" alt="harryrope" data-name="harryrope">
+  <img class="hidden" src="images/platform.png" alt="platform" data-name="platform">
+  <img class="hidden" src="images/rope.png" alt="rope" data-name="rope">
+  <img class="hidden" src="images/trees.png" alt="trees" data-name="trees">
+</section>
+
+<main>
+<h1>pitfall</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p><a href="https://wireframe.raspberrypi.org/issues/48">Source Code: Swing into action with an homage to Pitfall!, pages 64-65, by Mark Vanstone</a>.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+# Pitfall!
+import pgzrun
+import math
+
+rope = Actor(&#x27;rope&#x27;,midtop=(400,110), anchor=(&#x27;center&#x27;, &#x27;top&#x27;))
+harry = Actor(&#x27;harry&#x27;, (80,290))
+harry.attached = False
+harry.jump = 0
+harry.onground = True
+swing = -1
+
+def draw():
+    screen.blit(&quot;background&quot;, (0, 0))
+    rope.draw()
+    screen.blit(&quot;trees&quot;, (0, 0))
+    harry.draw()
+    screen.blit(&quot;platform&quot;, (0, 335))
+    if harry.x &gt; 550 and harry.y &lt; 300: screen.draw.text(&quot;You made it over!&quot;, center=(400, 560), owidth=0.5, ocolor=(0,0,255), color=(255,255,255) , fontsize=40)
+
+def update():
+    global swing
+    if rope.angle &lt; -45:
+        rope.angle = -45
+        swing = 1
+    if rope.angle &gt; 45:
+        rope.angle = 45
+        swing = -1
+    easing = (7-(math.sqrt(abs(rope.angle))))/3
+    rope.angle += swing*easing
+    oldx = harry.x
+    harry.onground = False
+    if (harry.y &gt; 289 and harry.y &lt; 293) or (harry.y &gt; 468 and harry.y &lt; 471): harry.onground = True
+    if harry.x &gt; 260 and harry.x &lt; 540 and harry.y &gt; 290 and harry.y &lt; 470 : harry.onground = False
+    if keyboard.right and (harry.onground == True or harry.jump &gt; 0):
+        harry.x += 2
+        harry.image = &quot;harry&quot;+str(int((harry.x/20)%4))
+    if keyboard.left and (harry.onground == True or harry.jump &gt; 0):
+        harry.x -= 2
+        harry.image = &quot;harry&quot;+str(int((harry.x/20)%4))+&quot;r&quot;
+    if harry.jump &gt; 0:
+        harry.y -= 2
+        harry.jump -=1
+        harry.image = &quot;harry0&quot;
+    else:
+        if harry.y &lt; 290 and harry.jump == 0 and harry.attached == False:
+            harry.y += 2
+        elif harry.jump == 0 and harry.x &gt; 255 and harry.x &lt; 540 and harry.y &lt; 470:
+            harry.y += 2
+
+    if oldx == harry.x and harry.jump == 0 : harry.image = &quot;harry&quot;
+    if harry.collidepoint (rope.left, rope.bottom) and rope.angle &lt; 25:
+        harry.attached = True
+    if harry.attached == True:
+        harry.image = &quot;harryrope&quot;
+        harry.y = rope.bottom + 32
+        harry.x = rope.x + (rope.angle * 2.7) - 12
+
+def on_key_down(key):
+    if key == keys.SPACE:
+        if harry.y == 290 or harry.attached == True:
+            harry.jump = 30
+            harry.attached = False
+        if harry.y &gt; 450: harry.pos = (80,290)
+
+pgzrun.go()
+</code></pre>
+</main>
+
+<script>
+// Pitfall!
+var rope, harry, swing;
+
+function reset() {
+  rope = new Actor('rope');
+  rope.anchor = ['center', 'top'];
+  rope.midtop = [400, 110];
+  harry = new Actor('harry');
+  harry.pos = [80, 290];
+  harry.attached = false;
+  harry.jump = 0;
+  harry.onground = true;
+  swing = -1;
+}
+
+function draw() {
+  screen.blit("background", [0, 0]);
+  rope.draw();
+  screen.blit("trees", [0, 0]);
+  harry.draw();
+  screen.blit("platform", [0, 335]);
+  if ((harry.posx > 550) && (harry.posy < 300)) {
+    screen.draw.text("You made it over!", {
+      center: [400, 560],
+      owidth: 0.5,
+      ocolor: [0, 0, 255],
+      color: [255, 255, 255],
+      fontsize: 40
+    });
+  }
+}
+
+function update() {
+  if (rope.angle < -45) {
+    rope.angle = -45;
+    swing = 1;
+  }
+  if (rope.angle > 45) {
+    rope.angle = 45;
+    swing = -1;
+  }
+  let easing = (7 - (Math.sqrt(Math.abs(rope.angle)))) / 3,
+      oldx = harry.posx;
+  rope.angle += swing * easing;
+  harry.onground = false;
+  if (((harry.posy > 289) && (harry.posy < 293)) || ((harry.posy > 468) && (harry.posy < 471))) {
+    harry.onground = true;
+  }
+  if ((harry.posx > 260) && (harry.posx < 540) && (harry.posy > 290) && (harry.posy < 470)) {
+    harry.onground = false;
+  }
+  if (keyboard[keys.RIGHT] && (harry.onground || (harry.jump > 0))) {
+    harry.posx += 2;
+    harry.name = "harry" + Math.trunc((harry.posx / 20) % 4);
+  }
+  if (keyboard[keys.LEFT] && (harry.onground || (harry.jump > 0))) {
+    harry.posx -= 2;
+    harry.name = "harry" + Math.trunc((harry.posx / 20) % 4) + "r";
+  }
+  if (harry.jump > 0) {
+    harry.posy -= 2;
+    harry.jump -= 1;
+    harry.name = "harry0";
+  }
+  else {
+    if ((harry.posy < 290) && (harry.jump === 0) && (!harry.attached)) {
+      harry.posy += 2;
+    }
+    else if ((harry.jump === 0) && (harry.posx > 255) && (harry.posx < 540) && (harry.posy < 470)) {
+      harry.posy += 2;
+    }
+  }
+
+  if ((oldx === harry.posx) && (harry.jump === 0)) {
+    harry.name = "harry";
+  }
+  // Calculate the coordinates of the end of the rope
+  let ropeLeft = rope.posx + (rope.height * Math.sin(rope.angle * Math.PI / 180)),
+      ropeBottom = rope.posy + (rope.height * Math.cos(rope.angle * Math.PI / 180));
+  if (harry.collidepoint(ropeLeft, ropeBottom) && (rope.angle < 25)) {
+    harry.attached = true;
+  }
+  if (harry.attached) {
+    harry.name = "harryrope";
+    harry.posy = ropeBottom + 32;
+    harry.posx = rope.posx + (rope.angle * 2.7) - 12;
+  }
+}
+
+function on_key_down(key) {
+  if (key === keys.SPACE) {
+    if ((harry.posy === 290) || harry.attached) {
+      harry.jump = 30;
+      harry.attached = false;
+    }
+    if (harry.posy > 450) {
+      harry.pos = [80, 290];
+    }
+  }
+}
+
+window.addEventListener('load', (event) => {
+  images.LOAD('#imageLoader img');
+  reset();
+  screen.set_mode('#screen', '#reset', '#pause');
+});
+</script>
+</body>
+
+</html>
