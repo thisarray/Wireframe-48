@@ -8,3 +8,5 @@ How not to code: a guide to concise programming, pages 58-63, by Andrew Gillett.
 Source Code: Swing into action with an homage to Pitfall!, pages 64-65, by Mark Vanstone.
 
 The code examples are licenced under Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported.
+
+[Run the JavaScript port of Source Code in your browser.](https://thisarray.github.io/Wireframe-48/source-code-pitfall/pitfall.html)
