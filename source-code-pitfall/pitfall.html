@@ -205,15 +205,12 @@ function update() {
   if ((oldx === harry.posx) && (harry.jump === 0)) {
     harry.name = "harry";
   }
-  // Calculate the coordinates of the end of the rope
-  let ropeLeft = rope.posx + (rope.height * Math.sin(rope.angle * Math.PI / 180)),
-      ropeBottom = rope.posy + (rope.height * Math.cos(rope.angle * Math.PI / 180));
-  if (harry.collidepoint(ropeLeft, ropeBottom) && (rope.angle < 25)) {
+  if (harry.collidepoint(rope.getBoundingBox().bottomleft) && (rope.angle < 25)) {
     harry.attached = true;
   }
   if (harry.attached) {
     harry.name = "harryrope";
-    harry.posy = ropeBottom + 32;
+    harry.posy = rope.getBoundingBox().bottom + 32;
     harry.posx = rope.posx + (rope.angle * 2.7) - 12;
   }
 }
