@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>maze</title>
+  <script src="../../jsgame0.js"></script>
+  <style type="text/css" media="screen">
+body {
+  background-color: white;
+  color: black;
+}
+.hidden {
+  display: none;
+}
+#original {
+  margin-left: 1em;
+}
+  </style>
+</head>
+
+<body>
+
+<main>
+<h1>maze</h1>
+
+<canvas id="screen">
+The game screen appears here if your browser supports the Canvas API.
+</canvas>
+<section id="controls">
+  <button type="button" id="reset">Reset</button>
+  <button type="button" id="pause">Pause</button>
+</section>
+
+<h2>Attribution</h2>
+
+<p><a href="https://wireframe.raspberrypi.com/issues/48">How not to code: a guide to concise programming, pages 58-63, by Andrew Gillett</a>.</p>
+
+<p>Licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/legalcode">Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported</a>.</p>
+
+<h2>Original Python code</h2>
+
+<pre id="original"><code>
+import pgzrun, pygame
+from pgzero.actor import Actor
+from abc import ABC, abstractmethod
+
+GRID = [&#x27;XXXXXXXXX&#x27;,
+        &#x27;X       X&#x27;,
+        &#x27;X X X X X&#x27;,
+        &#x27;X       X&#x27;,
+        &#x27;XXXXXXXXX&#x27;]
+
+GRID_SQ_SIZE = 64
+HALF_GRID_SQ_SIZE = 64 // 2
+SPEED = 2
+
+# Convert pixel coordinates to grid coordinates
+def get_grid_pos(x, y):
+    return x // GRID_SQ_SIZE, y // GRID_SQ_SIZE
+
+def move_towards(n, target, speed):
+    if n &lt; target:
+        return min(n + speed, target)
+    else:
+        return max(n - speed, target)
+
+class Player(Actor):
+    def __init__(self, pos, controls):
+        super().__init__(&#x27;player&#x27;, pos, anchor=(&#x27;left&#x27;, &#x27;top&#x27;))
+        self.controls = controls
+
+    def update(self):
+        x_dir = self.controls.get_x_dir()
+        if x_dir == 0:
+            y_dir = self.controls.get_y_dir()
+        else:
+            y_dir = 0
+
+        if x_dir != 0 or y_dir != 0:
+            self.move(x_dir, y_dir)
+
+    def move(self, x_dir, y_dir):
+        horizontal = x_dir != 0
+
+        centre_x = int(self.x) + HALF_GRID_SQ_SIZE
+        centre_y = int(self.y) + HALF_GRID_SQ_SIZE
+
+        # Determine leading edge
+        if horizontal:
+            new_leading_edge_x = int(self.x) - SPEED if x_dir &lt; 0 else int(self.x) + GRID_SQ_SIZE + SPEED - 1
+            new_grid_x, new_grid_y = get_grid_pos(new_leading_edge_x, centre_y)
+        else:
+            new_leading_edge_y = int(self.y) - SPEED if y_dir &lt; 0 else int(self.y) + GRID_SQ_SIZE + SPEED - 1
+            new_grid_x, new_grid_y = get_grid_pos(centre_x, new_leading_edge_y)
+
+        if GRID[new_grid_y][new_grid_x] == &#x27; &#x27;:
+            # The square ahead does not have a wall
+            self.x += x_dir * SPEED
+            self.y += y_dir * SPEED
+
+            # Lane alignment
+            # If we&#x27;re going horizontally, we want to align on the Y axis and vice versa
+            grid_x, grid_y = get_grid_pos(centre_x, centre_y)
+            if horizontal:
+                self.y = move_towards(self.y, grid_y * GRID_SQ_SIZE, 1)
+            else:
+                self.x = move_towards(self.x, grid_x * GRID_SQ_SIZE, 1)
+
+class Controls(ABC):
+    @abstractmethod
+    def get_x_dir(self):
+        pass
+
+    @abstractmethod
+    def get_y_dir(self):
+        pass
+
+class KeyboardControls(Controls):
+    def get_x_dir(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            return -1
+        elif keys[pygame.K_RIGHT]:
+            return 1
+        else:
+            return 0
+
+    def get_y_dir(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP]:
+            return -1
+        elif keys[pygame.K_DOWN]:
+            return 1
+        else:
+            return 0
+
+class JoystickControls(Controls):
+    def __init__(self, joystick_id):
+        self.joystick = pygame.joystick.Joystick(joystick_id)
+
+    def get_axis_dir(self, axis_id):
+        axis_value = self.joystick.get_axis(axis_id)
+        if abs(axis_value) &lt; 0.5:
+            return 0
+        else:
+            return 1 if axis_value &gt; 0 else -1
+
+    def get_x_dir(self):
+        return self.get_axis_dir(0)
+
+    def get_y_dir(self):
+        return self.get_axis_dir(1)
+
+WIDTH,HEIGHT = 576,320
+
+controls = JoystickControls(0) if pygame.joystick.get_count() &gt; 0 else KeyboardControls()
+player = Player( (64,64), controls )
+
+def update():
+    player.update()
+
+def draw():
+    screen.clear()
+
+    for row_index in range(len(GRID)):
+        for column_index in range(len(GRID[row_index])):
+            if GRID[row_index][column_index] != &#x27; &#x27;:
+                x, y = column_index * GRID_SQ_SIZE, row_index * GRID_SQ_SIZE
+                screen.blit(&#x27;gridblock&#x27;,(x,y))
+
+    player.draw()
+
+pgzrun.go()
+</code></pre>
+</main>
+
+<script>
+const GRID = [Array.from('XXXXXXXXX'),
+              Array.from('X       X'),
+              Array.from('X X X X X'),
+              Array.from('X       X'),
+              Array.from('XXXXXXXXX')];
+
+const GRID_SQ_SIZE = 64;
+const HALF_GRID_SQ_SIZE = Math.floor(64 / 2);
+const SPEED = 2;
+
+/*
+ * String wall in GRID.
+ */
+const WALL = 'X';
+
+// Convert pixel coordinates to grid coordinates
+function get_grid_pos(x, y) {
+  return [Math.floor(x / GRID_SQ_SIZE), Math.floor(y / GRID_SQ_SIZE)];
+}
+
+function move_towards(n, target, speed) {
+  if (n < target) {
+    return Math.min(n + speed, target);
+  }
+  else {
+    return Math.max(n - speed, target);
+  }
+}
+
+class Player {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  draw() {
+    screen.draw.filled_rect(new Rect(this.x, this.y, GRID_SQ_SIZE, GRID_SQ_SIZE), 'red');
+  }
+
+  update() {
+    let x_dir = 0,
+        y_dir = 0;
+    if (keyboard[keys.LEFT]) {
+      x_dir = -1;
+    }
+    else if (keyboard[keys.RIGHT]) {
+      x_dir = 1;
+    }
+
+    if (keyboard[keys.UP]) {
+      y_dir = -1;
+    }
+    else if (keyboard[keys.DOWN]) {
+      y_dir = 1;
+    }
+
+    if (Joystick.get_count() > 0) {
+      let joystick = new Joystick(0),
+          axis0 = joystick.get_axis(0),
+          axis1 = joystick.get_axis(1);
+      if (Math.abs(axis0) >= 0.5) {
+        if (axis0 > 0) {
+          x_dir = 1;
+        }
+        else {
+          x_dir = -1;
+        }
+      }
+      if (Math.abs(axis1) >= 0.5) {
+        if (axis1 > 0) {
+          y_dir = 1;
+        }
+        else {
+          y_dir = -1;
+        }
+      }
+    }
+
+    if ((x_dir !== 0) || (y_dir !== 0)) {
+      this.move(x_dir, y_dir);
+    }
+  }
+
+  move(x_dir, y_dir) {
+    let horizontal = (x_dir !== 0),
+
+        centre_x = Math.trunc(this.x) + HALF_GRID_SQ_SIZE,
+        centre_y = Math.trunc(this.y) + HALF_GRID_SQ_SIZE,
+
+        new_leading_edge_x, new_leading_edge_y, new_grid_x, new_grid_y,
+        grid_x, grid_y;
+
+    // Determine leading edge
+    if (horizontal) {
+      if (x_dir < 0) {
+        new_leading_edge_x = Math.trunc(this.x) - SPEED;
+      }
+      else {
+        new_leading_edge_x = Math.trunc(this.x) + GRID_SQ_SIZE + SPEED - 1;
+      }
+      [new_grid_x, new_grid_y] = get_grid_pos(new_leading_edge_x, centre_y);
+    }
+    else {
+      if (y_dir < 0) {
+        new_leading_edge_y = Math.trunc(this.y) - SPEED;
+      }
+      else {
+        new_leading_edge_y = Math.trunc(this.y) + GRID_SQ_SIZE + SPEED - 1;
+      }
+      [new_grid_x, new_grid_y] = get_grid_pos(centre_x, new_leading_edge_y);
+    }
+
+    if (GRID[new_grid_y][new_grid_x] !== WALL) {
+      // The square ahead does not have a wall
+      this.x += x_dir * SPEED;
+      this.y += y_dir * SPEED;
+
+      // Lane alignment
+      // If we're going horizontally, we want to align on the Y axis and vice versa
+      [grid_x, grid_y] = get_grid_pos(centre_x, centre_y);
+      if (horizontal) {
+        this.y = move_towards(this.y, grid_y * GRID_SQ_SIZE, 1);
+      }
+      else {
+        this.x = move_towards(this.x, grid_x * GRID_SQ_SIZE, 1);
+      }
+    }
+  }
+}
+
+WIDTH = 576;
+HEIGHT = 320;
+
+let player;
+
+function reset() {
+  player = new Player(64, 64);
+}
+
+function update() {
+  player.update();
+}
+
+function draw() {
+  screen.clear();
+
+  for (let row_index = 0; row_index < GRID.length; row_index++) {
+    for (let column_index = 0; column_index < GRID[row_index].length; column_index++) {
+      if (GRID[row_index][column_index] === WALL) {
+        screen.draw.filled_rect(new Rect(column_index * GRID_SQ_SIZE, row_index * GRID_SQ_SIZE, GRID_SQ_SIZE, GRID_SQ_SIZE), 'gray');
+      }
+    }
+  }
+
+  player.draw();
+}
+
+window.addEventListener('load', (event) => {
+  screen.init();
+  Joystick.init();
+});
+</script>
+</body>
+
+</html>
